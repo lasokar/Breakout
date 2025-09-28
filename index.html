@@ -330,6 +330,7 @@
   }
 
   function startGame(){
+    if (running) return;
     score=0; stage=1; updateHUD();
     spawnPaddle();
     spawnBall();
@@ -339,7 +340,12 @@
     requestAnimationFrame(loop);
   }
 
-  window.addEventListener('focus', ()=>{ if(!running) startGame(); });
+  if (document.hasFocus()) startGame();
+
+  window.addEventListener('focus', ()=>{ 
+    if(!running) startGame(); 
+  });
+
   window.addEventListener('resize', ()=>{
     gameW = window.innerWidth;
     gameH = window.innerHeight;
