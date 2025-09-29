@@ -163,9 +163,9 @@
 
   function spawnBall() {
     ballX = gameW/2 - ballSize/2;
-    ballY = gameH/3;
+    ballY = paddleY + 10;
     ballDX = Math.random() > 0.5 ? 1 : -1;
-    ballDY = 1;
+    ballDY = -1;
     if (ball) ball.remove();
     ball = createDiv({ id:'ball', x:ballX, y:ballY, w:ballSize, h:ballSize, bg:'#aaa' });
     ball.style.borderRadius = '25%';
