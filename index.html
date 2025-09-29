@@ -106,7 +106,7 @@
 
   const paddleW = 200;
   const paddleH = 22;
-  const ballSize = 48;
+  const ballSize = 32;
   const blockW = 180;
   const blockH = 40;
   const blockRows = 5;
@@ -163,7 +163,7 @@
 
   function spawnBall() {
     ballX = paddleX + paddleW/2 - ballSize/2;
-    ballY = paddleY - paddleH/2 - 10;
+    ballY = paddleY - paddleH/2 - ballSize/2;
     if (paddleX > gameW/2) {
       ballDX = 1;
     } else if (paddleX < gameW/2) {
