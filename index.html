@@ -419,8 +419,16 @@
 
   if (document.hasFocus()) startGame();
 
-  window.addEventListener('focus', ()=>{ 
-    if(!running) startGame(); 
+  window.addEventListener('blur', () => {
+    running = false;
+  });
+
+  window.addEventListener('focus', () => {
+    if (!running) {
+      running = true;
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
   });
 
   window.addEventListener('resize', ()=>{
