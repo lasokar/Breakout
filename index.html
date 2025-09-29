@@ -162,18 +162,22 @@
   }
 
   function spawnBall() {
-    ballX = paddleX + paddleW/2 - ballSize/2;
-    ballY = paddleY - paddleH/2 - ballSize/2;
-    if (paddleX > gameW/2) {
-      ballDX = 1;
-    } else if (paddleX < gameW/2) {
-      ballDX = -1;
+    ballX = paddleX + paddleW / 2 - ballSize / 2;
+    ballY = paddleY - paddleH / 2 - ballSize / 2;
+
+    const centerThreshold = gameW * 0.05;
+
+    if (paddleX > gameW / 2 + centerThreshold) {
+        ballDX = 1;
+    } else if (paddleX < gameW / 2 - centerThreshold) {
+        ballDX = -1;
     } else {
-      ballDX = Math.random() > 0.5 ? 1 : -1;
+        ballDX = Math.random() > 0.5 ? 1 : -1;
     }
+
     ballDY = -1;
     if (ball) ball.remove();
-    ball = createDiv({ id:'ball', x:ballX, y:ballY, w:ballSize, h:ballSize, bg:'#aaa' });
+    ball = createDiv({ id: 'ball', x: ballX, y: ballY, w: ballSize, h: ballSize, bg: '#aaa' });
     ball.style.borderRadius = '25%';
     ballTrail.length = 0;
   }
