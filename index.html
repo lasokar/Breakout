@@ -36,15 +36,15 @@
     border:3px solid #000;
     border-radius:25%;
     z-index:105;
+    transition: background 0.15s ease;
   }
   .block {
     height:40px;
     border:3px solid #000;
     border-radius:6px;
   }
-  #hud {
+  #hud, #stageHud {
     position:absolute;
-    left:12px;
     top:12px;
     background:#fff;
     color:#000;
@@ -54,6 +54,8 @@
     font-weight:600;
     z-index:200;
   }
+  #hud { left:12px; }
+  #stageHud { right:12px; }
   .stage-msg {
     position:absolute;
     top:50%;
@@ -85,6 +87,7 @@
 <body>
 <div id="game">
   <div id="hud">Score: <span id="score">0</span></div>
+  <div id="stageHud">Stage: <span id="stageNum">1</span></div>
   <div id="stageMsg" class="stage-msg"></div>
   <canvas id="canvas"></canvas>
 </div>
@@ -93,6 +96,7 @@
 (function () {
   const gameEl = document.getElementById('game');
   const hudScore = document.getElementById('score');
+  const stageNumEl = document.getElementById('stageNum');
   const stageMsg = document.getElementById('stageMsg');
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
@@ -141,6 +145,14 @@
     });
   }
 
+  function pulseBall() {
+    if (!ball) return;
+    ball.style.background = '#fff';
+    setTimeout(() => {
+      ball.style.background = '#aaa';
+    }, 100);
+  }
+
   function createDiv({ id, x, y, w, h, bg, classes = '' }) {
     const el = document.createElement('div');
     if (id) el.id = id;
@@ -166,7 +178,6 @@
     ballY = paddleY - paddleH / 2 - ballSize / 2;
 
     const centerThreshold = gameW * 0.05;
-
     if (paddleX > gameW / 2 + centerThreshold) {
         ballDX = 1;
     } else if (paddleX < gameW / 2 - centerThreshold) {
@@ -191,18 +202,35 @@
     clearBlocks();
     const marginX = (gameW - (blockCols * (blockW+10)))/2;
     const startY = 15;
+
+    const tint = Math.min(stage, 10) / 10;
+
     for (let r=0; r<blockRows; r++) {
       for (let c=0; c<blockCols; c++) {
         const x = marginX + c*(blockW+10);
         const y = startY + r*(blockH+10);
-        const color = blockColors[(r+c)%blockColors.length];
+        const baseColor = blockColors[(r+c)%blockColors.length];
+
+        const red = 255, green = 0, blue = 0;
+        const bc = parseInt(baseColor.slice(1), 16);
+        const br = (bc >> 16) & 255;
+        const bg = (bc >> 8) & 255;
+        const bb = bc & 255;
+        const rMix = Math.round(br*(1-tint) + red*tint);
+        const gMix = Math.round(bg*(1-tint) + green*tint);
+        const bMix = Math.round(bb*(1-tint) + blue*tint);
+        const color = `rgb(${rMix},${gMix},${bMix})`;
+
         const el = createDiv({ classes:'block', x,y,w:blockW,h:blockH,bg:color });
         blocks.push({ x,y,w:blockW,h:blockH,el });
       }
     }
   }
 
-  function updateHUD() { hudScore.innerText = score; }
+  function updateHUD() { 
+    hudScore.innerText = score; 
+    stageNumEl.innerText = stage;
+  }
   function showStageMessage(text) {
     stageMsg.innerText = text;
     stageMsg.style.opacity = 1;
@@ -225,15 +253,16 @@
     ballX += ballDX * ballSpeed * dt;
     ballY += ballDY * ballSpeed * dt;
 
-    if (ballX <= 0) { ballX=0; ballDX*=-1; }
-    if (ballX+ballSize >= gameW) { ballX=gameW-ballSize; ballDX*=-1; }
-    if (ballY <= 0) { ballY=0; ballDY*=-1; }
+    if (ballX <= 0) { ballX=0; ballDX*=-1; pulseBall(); }
+    if (ballX+ballSize >= gameW) { ballX=gameW-ballSize; ballDX*=-1; pulseBall(); }
+    if (ballY <= 0) { ballY=0; ballDY*=-1; pulseBall(); }
 
     if (rectsIntersect(ballX, ballY, ballSize, ballSize, paddleX, paddleY, paddleW, paddleH)) {
       const hitPos = (ballX + ballSize/2 - paddleX) / paddleW; 
       if (hitPos < 1/3) ballDX = -1;
       else if (hitPos > 2/3) ballDX = 1;
       ballDY = -1;
+      pulseBall();
     }
 
     for (let i=blocks.length-1; i>=0; i--){
@@ -244,6 +273,7 @@
         score++;
         updateHUD();
         ballDY*=-1;
+        pulseBall();
       }
     }
 
@@ -259,6 +289,7 @@
       paddleSpeed += 2;
       generateBlocks();
       spawnBall();
+      updateHUD();
       showStageMessage("Stage "+stage);
     }
   }
