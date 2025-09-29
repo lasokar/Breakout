@@ -162,8 +162,8 @@
   }
 
   function spawnBall() {
-    ballX = paddleX - ballSize/2;
-    ballY = paddleY + 10;
+    ballX = paddleX + paddleW/2 - ballSize/2;
+    ballY = paddleY + paddleH + 25;
     ballDX = Math.random() > 0.5 ? 1 : -1;
     ballDY = -1;
     if (ball) ball.remove();
