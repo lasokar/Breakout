@@ -87,7 +87,7 @@
 <body>
 <div id="game">
   <div id="hud">Score: <span id="score">0</span></div>
-  <div id="stageHud">Stage: <span id="stageNum">1</span></div>
+  <div id="stageHud">Stage <span id="stageNum">1</span></div>
   <div id="stageMsg" class="stage-msg"></div>
   <canvas id="canvas"></canvas>
 </div>
@@ -144,6 +144,8 @@
       startY: gameH
     });
   }
+
+  let fireIntensity = 0;
 
   function pulseBall() {
     if (!ball) return;
@@ -289,8 +291,10 @@
       paddleSpeed += 2;
       generateBlocks();
       spawnBall();
-      updateHUD();
       showStageMessage("Stage "+stage);
+      updateHUD();
+
+      if (stage > 10) fireIntensity = Math.min((stage - 10)/10,1);
     }
   }
 
@@ -300,8 +304,40 @@
     paddle.style.left=paddleX+'px';
   }
 
+  function renderFire() {
+    if (fireIntensity <= 0) return;
+
+    const gradient = ctx.createLinearGradient(0, gameH, 0, 0);
+    gradient.addColorStop(0, `rgba(255,80,0,${0.6*fireIntensity})`);
+    gradient.addColorStop(0.4, `rgba(255,150,0,${0.4*fireIntensity})`);
+    gradient.addColorStop(0.7, `rgba(255,200,50,${0.2*fireIntensity})`);
+    gradient.addColorStop(1, `rgba(255,255,255,0)`);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0,0,gameW,gameH);
+
+    ctx.save();
+    ctx.globalAlpha = 0.3 * fireIntensity;
+    ctx.fillStyle = "rgba(255,120,0,0.3)";
+    const flameHeight = 200;
+    for (let i=0; i<5; i++) {
+      const offset = (Date.now()/600 + i) % 2 * Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(0, gameH);
+      for (let x=0; x<=gameW; x+=20) {
+        const y = gameH - flameHeight * Math.abs(Math.sin(x/150 + offset));
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(gameW, gameH);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   function render() {
     ctx.clearRect(0,0,gameW,gameH);
+
+    renderFire();
 
     particles.forEach(p=>{
       p.y -= p.speedY;
