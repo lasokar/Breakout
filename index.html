@@ -156,7 +156,7 @@
 
   function spawnPaddle() {
     paddleX = (gameW - paddleW) / 2;
-    paddleY = gameH - lavaHeight - 50;
+    paddleY = gameH - lavaHeight - 80;
     if (paddle) paddle.remove();
     paddle = createDiv({ id:'paddle', x:paddleX, y:paddleY, w:paddleW, h:paddleH, bg:'#0b84ff' });
   }
