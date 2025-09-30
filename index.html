@@ -149,6 +149,7 @@
   let ball, ballX, ballY, ballDX, ballDY;
 
   const blockColors = ['#ff4d4f','#ffa940','#ffd666','#73d13d','#36cfc9','#69c0ff','#b37feb'];
+  const collisionParticles = [];
   const ballTrail = [];
   const particles = [];
   const particleCount = 50;
@@ -286,6 +287,17 @@
       const b=blocks[i];
       if (rectsIntersect(ballX,ballY,ballSize,ballSize,b.x,b.y,b.w,b.h)){
         b.el.remove();
+        for (let j=0;j<10;j++){
+          collisionParticles.push({
+            x: ballX + ballSize/2,
+            y: ballY + ballSize/2,
+            radius: Math.random()*5 + 2,
+            color: b.el.style.background,
+            dx: (Math.random()-0.5)*4,
+            dy: (Math.random()-1.5)*4,
+            life: 0.5
+          });
+        }
         blocks.splice(i,1);
         score++;
         updateHUD();
@@ -351,6 +363,23 @@
     ctx.clearRect(0,0,gameW,gameH);
     renderFire();
 
+    for (let i = collisionParticles.length-1; i >= 0; i--){
+      const p = collisionParticles[i];
+      p.dy += 0.15;
+      p.x += p.dx;
+      p.y += p.dy;
+      p.life -= 1/60;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+      ctx.fillStyle = p.color.replace('rgb', 'rgba').replace(')', `,${Math.max(p.life/0.5,0)})`);
+      ctx.fill();
+
+      if(p.life <= 0){
+        collisionParticles.splice(i,1);
+      }
+    }
+    
     particles.forEach(p=>{
       p.y -= p.speedY;
       const traveled = p.startY - p.y;
