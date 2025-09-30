@@ -133,8 +133,10 @@
   const blockRows = 5;
   const blockCols = 7;
 
-  let ballSpeed = 4;
-  let paddleSpeed = 7;
+  const baseBallSpeed = 4;
+  const basePaddleSpeed = 7;
+  let ballSpeed = baseBallSpeed;
+  let paddleSpeed = basePaddleSpeed;
 
   let score = 0;
   let stage = 1;
@@ -414,7 +416,11 @@
 
   function startGame(){
     if (running) return;
-    score=0; stage=1; updateHUD();
+    score=0; 
+    stage=1; 
+    ballSpeed = baseBallSpeed;
+    paddleSpeed = basePaddleSpeed;
+    updateHUD();
     spawnPaddle();
     spawnBall();
     generateBlocks();
