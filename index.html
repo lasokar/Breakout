@@ -72,6 +72,7 @@
     opacity:0;
     transition:opacity 0.5s ease;
     pointer-events:none;
+    text-align:center;
   }
   #canvas {
     position:absolute;
@@ -82,6 +83,16 @@
     z-index:104;
     pointer-events:none;
   }
+  #retryBtn {
+    margin-top:10px;
+    padding:8px 16px;
+    font-size:1rem;
+    font-weight:bold;
+    border:3px solid #000;
+    border-radius:6px;
+    background:#fff;
+    cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -89,6 +100,10 @@
   <div id="hud">Score: <span id="score">0</span></div>
   <div id="stageHud">Stage <span id="stageNum">1</span></div>
   <div id="stageMsg" class="stage-msg"></div>
+  <div id="gameOverMsg" class="stage-msg">
+    Game Over!<br>
+    <button id="retryBtn">Retry</button>
+  </div>
   <canvas id="canvas"></canvas>
 </div>
 
@@ -98,6 +113,8 @@
   const hudScore = document.getElementById('score');
   const stageNumEl = document.getElementById('stageNum');
   const stageMsg = document.getElementById('stageMsg');
+  const gameOverMsg = document.getElementById('gameOverMsg');
+  const retryBtn = document.getElementById('retryBtn');
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
 
@@ -128,12 +145,11 @@
   let ball, ballX, ballY, ballDX, ballDY;
 
   const blockColors = ['#ff4d4f','#ffa940','#ffd666','#73d13d','#36cfc9','#69c0ff','#b37feb'];
-
   const ballTrail = [];
-
   const particles = [];
   const particleCount = 50;
   const particleTravel = lavaHeight * 3;
+
   for(let i=0;i<particleCount;i++){
     particles.push({
       x: Math.random() * gameW,
@@ -178,7 +194,6 @@
   function spawnBall() {
     ballX = paddleX + paddleW / 2 - ballSize / 2;
     ballY = paddleY - paddleH / 2 - ballSize / 2;
-
     const centerThreshold = gameW * 0.05;
     if (paddleX > gameW / 2 + centerThreshold) {
         ballDX = 1;
@@ -187,7 +202,6 @@
     } else {
         ballDX = Math.random() > 0.5 ? 1 : -1;
     }
-
     ballDY = -1;
     if (ball) ball.remove();
     ball = createDiv({ id: 'ball', x: ballX, y: ballY, w: ballSize, h: ballSize, bg: '#aaa' });
@@ -204,7 +218,6 @@
     clearBlocks();
     const marginX = (gameW - (blockCols * (blockW+10)))/2;
     const startY = 15;
-
     const tint = Math.min(stage, 10) / 10;
 
     for (let r=0; r<blockRows; r++) {
@@ -212,17 +225,14 @@
         const x = marginX + c*(blockW+10);
         const y = startY + r*(blockH+10);
         const baseColor = blockColors[(r+c)%blockColors.length];
-
-        const red = 255, green = 0, blue = 0;
         const bc = parseInt(baseColor.slice(1), 16);
         const br = (bc >> 16) & 255;
         const bg = (bc >> 8) & 255;
         const bb = bc & 255;
-        const rMix = Math.round(br*(1-tint) + red*tint);
-        const gMix = Math.round(bg*(1-tint) + green*tint);
-        const bMix = Math.round(bb*(1-tint) + blue*tint);
+        const rMix = Math.round(br*(1-tint) + 255*tint);
+        const gMix = Math.round(bg*(1-tint) + 0*tint);
+        const bMix = Math.round(bb*(1-tint) + 0*tint);
         const color = `rgb(${rMix},${gMix},${bMix})`;
-
         const el = createDiv({ classes:'block', x,y,w:blockW,h:blockH,bg:color });
         blocks.push({ x,y,w:blockW,h:blockH,el });
       }
@@ -233,10 +243,15 @@
     hudScore.innerText = score; 
     stageNumEl.innerText = stage;
   }
+
   function showStageMessage(text) {
     stageMsg.innerText = text;
     stageMsg.style.opacity = 1;
     setTimeout(()=> stageMsg.style.opacity = 0, 1200);
+  }
+
+  function rectsIntersect(ax,ay,aw,ah,bx,by,bw,bh){
+    return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
   }
 
   window.addEventListener('keydown', e=>{
@@ -246,10 +261,6 @@
   window.addEventListener('keyup', e=>{
     if (e.key==='ArrowLeft'||e.key==='ArrowRight') paddleMove=0;
   });
-
-  function rectsIntersect(ax,ay,aw,ah,bx,by,bw,bh){
-    return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
-  }
 
   function updatePhysics(dt) {
     ballX += ballDX * ballSpeed * dt;
@@ -280,9 +291,7 @@
     }
 
     if (ballY + ballSize >= gameH) {
-      running = false;
-      alert("Game Over! Your score: " + score);
-      window.location.reload();
+      gameOver();
     }
 
     if (blocks.length===0 && running){
@@ -306,7 +315,6 @@
 
   function renderFire() {
     if (fireIntensity <= 0) return;
-
     const gradient = ctx.createLinearGradient(0, gameH, 0, 0);
     gradient.addColorStop(0, `rgba(255,80,0,${0.6*fireIntensity})`);
     gradient.addColorStop(0.4, `rgba(255,150,0,${0.4*fireIntensity})`);
@@ -328,6 +336,7 @@
         ctx.lineTo(x, y);
       }
       ctx.lineTo(gameW, gameH);
+      ctx.lineTo(0, gameH);
       ctx.closePath();
       ctx.fill();
     }
@@ -336,15 +345,12 @@
 
   function render() {
     ctx.clearRect(0,0,gameW,gameH);
-
     renderFire();
 
     particles.forEach(p=>{
       p.y -= p.speedY;
       const traveled = p.startY - p.y;
-      if(traveled > particleTravel * 0.8){
-        p.alpha -= 0.005;
-      }
+      if(traveled > particleTravel * 0.8) p.alpha -= 0.005;
       if(traveled > particleTravel || p.alpha <= 0){
         p.x = Math.random()*gameW;
         p.y = gameH;
@@ -416,6 +422,18 @@
     lastTime = performance.now();
     requestAnimationFrame(loop);
   }
+
+  function gameOver() {
+    running = false;
+    gameOverMsg.style.opacity = 1;
+    gameOverMsg.style.pointerEvents = 'auto';
+  }
+
+  retryBtn.addEventListener('click', () => {
+    gameOverMsg.style.opacity = 0;
+    gameOverMsg.style.pointerEvents = 'none';
+    startGame();
+  });
 
   if (document.hasFocus()) startGame();
 
