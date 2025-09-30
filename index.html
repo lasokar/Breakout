@@ -155,6 +155,9 @@
   const particleCount = 50;
   const particleTravel = lavaHeight * 3;
 
+  const bouncePaddleSFX = new Audio('assets/bounce1.wav');
+  const bounceBlockSFX = new Audio('assets/bounce2.wav');
+
   for(let i=0;i<particleCount;i++){
     particles.push({
       x: Math.random() * gameW,
@@ -271,9 +274,9 @@
     ballX += ballDX * ballSpeed * dt;
     ballY += ballDY * ballSpeed * dt;
 
-    if (ballX <= 0) { ballX=0; ballDX*=-1; pulseBall(); }
-    if (ballX+ballSize >= gameW) { ballX=gameW-ballSize; ballDX*=-1; pulseBall(); }
-    if (ballY <= 0) { ballY=0; ballDY*=-1; pulseBall(); }
+    if (ballX <= 0) { ballX=0; ballDX*=-1; pulseBall(); bouncePaddleSFX.play(); }
+    if (ballX+ballSize >= gameW) { ballX=gameW-ballSize; ballDX*=-1; pulseBall(); bouncePaddleSFX.play(); }
+    if (ballY <= 0) { ballY=0; ballDY*=-1; pulseBall(); bouncePaddleSFX.play(); }
 
     if (rectsIntersect(ballX, ballY, ballSize, ballSize, paddleX, paddleY, paddleW, paddleH)) {
       const hitPos = (ballX + ballSize/2 - paddleX) / paddleW; 
@@ -281,6 +284,7 @@
       else if (hitPos > 2/3) ballDX = 1;
       ballDY = -1;
       pulseBall();
+      bouncePaddleSFX.play();
     }
 
     for (let i=blocks.length-1; i>=0; i--){
@@ -303,6 +307,7 @@
         updateHUD();
         ballDY*=-1;
         pulseBall();
+        bounceBlockSFX.play();
       }
     }
 
