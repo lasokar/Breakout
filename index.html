@@ -280,9 +280,26 @@
     ballX += ballDX * ballSpeed * dt;
     ballY += ballDY * ballSpeed * dt;
 
-    if (ballX <= 0) { ballX=0; ballDX*=-1; pulseBall(); playSound(bouncePaddleSFX); }
-    if (ballX+ballSize >= gameW) { ballX=gameW-ballSize; ballDX*=-1; pulseBall(); playSound(bouncePaddleSFX); }
-    if (ballY <= 0) { ballY=0; ballDY*=-1; pulseBall(); playSound(bouncePaddleSFX); }
+    if (ballX < 0) {
+      ballX = 0;
+      ballDX = Math.abs(ballDX);
+      pulseBall();
+      playSound(bouncePaddleSFX);
+    }
+
+    if (ballX + ballSize > gameW) {
+      ballX = gameW - ballSize;
+      ballDX = -Math.abs(ballDX);
+      pulseBall();
+      playSound(bouncePaddleSFX);
+    }
+
+    if (ballY < 0) {
+      ballY = 0;
+      ballDY = Math.abs(ballDY);
+      pulseBall();
+      playSound(bouncePaddleSFX);
+    }
 
     if (rectsIntersect(ballX, ballY, ballSize, ballSize, paddleX, paddleY, paddleW, paddleH)) {
       const hitPos = (ballX + ballSize/2 - paddleX) / paddleW; 
