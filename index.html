@@ -208,11 +208,11 @@
   function spawnBall() {
     ballX = paddleX + paddleW / 2 - ballSize / 2;
     ballY = paddleY - paddleH / 2 - ballSize / 2;
-    const centerThreshold = gameW * 0.05;
+    const centerThreshold = gameW * 0.5;
     if (paddleX > gameW / 2 + centerThreshold) {
-        ballDX = 1;
-    } else if (paddleX < gameW / 2 - centerThreshold) {
         ballDX = -1;
+    } else if (paddleX < gameW / 2 - centerThreshold) {
+        ballDX = 1;
     } else {
         ballDX = Math.random() > 0.5 ? 1 : -1;
     }
