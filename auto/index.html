@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Breakout but hacked</title>
+<style>
+  body {
+    margin:0;
+    background:#111;
+    color:#fff;
+    font-family:sans-serif;
+    overflow:hidden;
+  }
+  #game {
+    position:relative;
+    width:100%;
+    height:100vh;
+    overflow:hidden;
+  }
+  .game-el {
+    position:absolute;
+    box-sizing:border-box;
+    z-index:100;
+  }
+  #paddle {
+    height:22px;
+    background:#0b84ff;
+    border:3px solid #000;
+    border-radius:6px;
+    z-index:106;
+  }
+  #ball {
+    width:36px;
+    height:36px;
+    background:#aaa;
+    border:3px solid #000;
+    border-radius:25%;
+    z-index:105;
+    transition: background 0.15s ease;
+  }
+  .block {
+    height:40px;
+    border:3px solid #000;
+    border-radius:6px;
+    z-index:107;
+  }
+  #hud, #stageHud {
+    position:absolute;
+    top:12px;
+    background:#fff;
+    color:#000;
+    padding:6px 10px;
+    border-radius:6px;
+    border:3px solid #000;
+    font-weight:600;
+    z-index:200;
+  }
+  #hud { left:12px; }
+  #stageHud { right:12px; }
+  .stage-msg {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:rgba(255,255,255,0.9);
+    color:#000;
+    padding:12px 20px;
+    border:3px solid #000;
+    border-radius:10px;
+    font-size:1.5rem;
+    font-weight:bold;
+    z-index:300;
+    opacity:0;
+    transition:opacity 0.5s ease;
+    pointer-events:none;
+    text-align:center;
+  }
+  #canvas {
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:104;
+    pointer-events:none;
+  }
+  #retryBtn {
+    margin-top:10px;
+    padding:8px 16px;
+    font-size:1rem;
+    font-weight:bold;
+    border:3px solid #000;
+    border-radius:6px;
+    background:#fff;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud">Score: <span id="score">0</span></div>
+  <div id="stageHud">Stage <span id="stageNum">1</span></div>
+  <div id="stageMsg" class="stage-msg"></div>
+  <div id="gameOverMsg" class="stage-msg">
+    Game Over!<br>
+    <button id="retryBtn">Retry</button>
+  </div>
+  <canvas id="canvas"></canvas>
+</div>
+
+<script>
+(function () {
+  const gameEl = document.getElementById('game');
+  const hudScore = document.getElementById('score');
+  const stageNumEl = document.getElementById('stageNum');
+  const stageMsg = document.getElementById('stageMsg');
+  const gameOverMsg = document.getElementById('gameOverMsg');
+  const retryBtn = document.getElementById('retryBtn');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  let gameW = window.innerWidth;
+  let gameH = window.innerHeight;
+  const lavaHeight = 50;
+
+  canvas.width = gameW;
+  canvas.height = gameH;
+
+  const paddleW = 200;
+  const paddleH = 22;
+  const ballSize = 36;
+  const blockW = 180;
+  const blockH = 40;
+  const blockRows = 5;
+  const blockCols = 7;
+
+  const baseBallSpeed = 4;
+  const basePaddleSpeed = 7;
+  let ballSpeed = baseBallSpeed;
+  let paddleSpeed = basePaddleSpeed;
+
+  let score = 0;
+  let stage = 1;
+  let blocks = [];
+  let running = false;
+
+  let paddle, paddleX, paddleY, paddleMove = 0;
+  let ball, ballX, ballY, ballDX, ballDY;
+
+  const blockColors = ['#ff4d4f','#ffa940','#ffd666','#73d13d','#36cfc9','#69c0ff','#b37feb'];
+  const collisionParticles = [];
+  const ballTrail = [];
+  const particles = [];
+  const particleCount = 50;
+  const particleTravel = lavaHeight * 3;
+
+  const bouncePaddleSFX = new Audio('assets/bounce1.wav');
+  bouncePaddleSFX.volume = 0.5;
+  const bounceBlockSFX = new Audio('assets/bounce2.wav');
+  
+  function playSound(sound) {
+    const sfx = sound.cloneNode();
+    sfx.play();
+  }
+
+  for(let i=0;i<particleCount;i++){
+    particles.push({
+      x: Math.random() * gameW,
+      y: gameH,
+      radius: Math.random()*3+2,
+      speedY: Math.random()*0.3+0.2,
+      alpha: Math.random()*0.5+0.3,
+      startY: gameH
+    });
+  }
+
+  let fireIntensity = 0;
+
+  function pulseBall() {
+    if (!ball) return;
+    ball.style.background = '#fff';
+    setTimeout(() => {
+      ball.style.background = '#aaa';
+    }, 100);
+  }
+
+  function createDiv({ id, x, y, w, h, bg, classes = '' }) {
+    const el = document.createElement('div');
+    if (id) el.id = id;
+    el.className = 'game-el ' + classes;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.width = w + 'px';
+    el.style.height = h + 'px';
+    if (bg) el.style.background = bg;
+    gameEl.appendChild(el);
+    return el;
+  }
+
+  function spawnPaddle() {
+    paddleX = (gameW - paddleW) / 2;
+    paddleY = gameH - lavaHeight - 80;
+    if (paddle) paddle.remove();
+    paddle = createDiv({ id:'paddle', x:paddleX, y:paddleY, w:paddleW, h:paddleH, bg:'#0b84ff' });
+  }
+
+  function spawnBall() {
+    ballX = paddleX + paddleW / 2 - ballSize / 2;
+    ballY = paddleY - paddleH / 2 - ballSize / 2;
+    const centerThreshold = gameW * 0.1;
+    if (paddleX > gameW / 2 + centerThreshold) {
+        ballDX = 1;
+    } else if (paddleX < gameW / 2 - centerThreshold) {
+        ballDX = -1;
+    } else {
+        ballDX = Math.random() > 0.5 ? 1 : -1;
+    }
+    ballDY = -1;
+    if (ball) ball.remove();
+    ball = createDiv({ id: 'ball', x: ballX, y: ballY, w: ballSize, h: ballSize, bg: '#aaa' });
+    ball.style.borderRadius = '25%';
+    ballTrail.length = 0;
+  }
+
+  function clearBlocks() {
+    blocks.forEach(b => b.el.remove());
+    blocks = [];
+  }
+
+  function generateBlocks() {
+    clearBlocks();
+    const marginX = (gameW - (blockCols * (blockW+10)))/2;
+    const startY = 15;
+    const tint = Math.min(stage, 10) / 10;
+
+    for (let r=0; r<blockRows; r++) {
+      for (let c=0; c<blockCols; c++) {
+        const x = marginX + c*(blockW+10);
+        const y = startY + r*(blockH+10);
+        const baseColor = blockColors[(r+c)%blockColors.length];
+        const bc = parseInt(baseColor.slice(1), 16);
+        const br = (bc >> 16) & 255;
+        const bg = (bc >> 8) & 255;
+        const bb = bc & 255;
+        const rMix = Math.round(br*(1-tint) + 255*tint);
+        const gMix = Math.round(bg*(1-tint) + 0*tint);
+        const bMix = Math.round(bb*(1-tint) + 0*tint);
+        const color = `rgb(${rMix},${gMix},${bMix})`;
+        const el = createDiv({ classes:'block', x,y,w:blockW,h:blockH,bg:color });
+        blocks.push({ x,y,w:blockW,h:blockH,el });
+      }
+    }
+  }
+
+  function updateHUD() { 
+    hudScore.innerText = score; 
+    stageNumEl.innerText = stage;
+  }
+
+  function showStageMessage(text) {
+    stageMsg.innerText = text;
+    stageMsg.style.opacity = 1;
+    setTimeout(()=> stageMsg.style.opacity = 0, 1200);
+  }
+
+  function rectsIntersect(ax,ay,aw,ah,bx,by,bw,bh){
+    return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
+  }
+
+  window.addEventListener('keydown', e=>{
+    if (e.key==='ArrowLeft') paddleMove=-1;
+    if (e.key==='ArrowRight') paddleMove=1;
+  });
+  window.addEventListener('keyup', e=>{
+    if (e.key==='ArrowLeft'||e.key==='ArrowRight') paddleMove=0;
+  });
+
+  function updatePhysics(dt) {
+    ballX += ballDX * ballSpeed * dt;
+    ballY += ballDY * ballSpeed * dt;
+
+    if (ballX < 0) {
+      ballX = 0;
+      ballDX = Math.abs(ballDX);
+      pulseBall();
+      playSound(bouncePaddleSFX);
+    }
+
+    if (ballX + ballSize > gameW) {
+      ballX = gameW - ballSize;
+      ballDX = -Math.abs(ballDX);
+      pulseBall();
+      playSound(bouncePaddleSFX);
+    }
+
+    if (ballY < 0) {
+      ballY = 0;
+      ballDY = Math.abs(ballDY);
+      pulseBall();
+      playSound(bouncePaddleSFX);
+    }
+
+    if (rectsIntersect(ballX, ballY, ballSize, ballSize, paddleX, paddleY, paddleW, paddleH)) {
+      const hitPos = (ballX + ballSize/2 - paddleX) / paddleW; 
+      if (hitPos < 1/4) ballDX = -1;
+      else if (hitPos > 3/4) ballDX = 1;
+      ballDY = -1;
+      pulseBall();
+      playSound(bouncePaddleSFX);
+    }
+
+    for (let i=blocks.length-1; i>=0; i--){
+      const b=blocks[i];
+      if (rectsIntersect(ballX,ballY,ballSize,ballSize,b.x,b.y,b.w,b.h)){
+        b.el.remove();
+        for (let j=0;j<10;j++){
+          collisionParticles.push({
+            x: ballX + ballSize/2,
+            y: ballY + ballSize/2,
+            radius: Math.random()*5 + 2,
+            color: b.el.style.background,
+            dx: (Math.random()-0.5)*4,
+            dy: (Math.random()-1.5)*4,
+            life: 0.5
+          });
+        }
+        blocks.splice(i,1);
+        score++;
+        updateHUD();
+        ballDY*=-1;
+        pulseBall();
+        playSound(bounceBlockSFX);
+      }
+    }
+
+    if (ballY + ballSize >= gameH) {
+      gameOver();
+    }
+
+    if (blocks.length===0 && running){
+      stage++;
+      ballSpeed += 2;
+      paddleSpeed += 2.5;
+      generateBlocks();
+      spawnBall();
+      showStageMessage("Stage "+stage);
+      updateHUD();
+
+      if (stage > 10) fireIntensity = Math.min((stage - 10)/10,1);
+    }
+  }
+
+  function updatePaddle(dt) {
+    paddleX = ballX + ballSize / 2 - paddleW / 2;
+    if (paddleX < 0) paddleX = 0;
+    if (paddleX > gameW - paddleW) paddleX = gameW - paddleW;
+    paddle.style.left = paddleX + 'px';
+  }
+
+  function renderFire() {
+    if (fireIntensity <= 0) return;
+    const gradient = ctx.createLinearGradient(0, gameH, 0, 0);
+    gradient.addColorStop(0, `rgba(255,80,0,${0.6*fireIntensity})`);
+    gradient.addColorStop(0.4, `rgba(255,150,0,${0.4*fireIntensity})`);
+    gradient.addColorStop(0.7, `rgba(255,200,50,${0.2*fireIntensity})`);
+    gradient.addColorStop(1, `rgba(255,255,255,0)`);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0,0,gameW,gameH);
+
+    ctx.save();
+    ctx.globalAlpha = 0.3 * fireIntensity;
+    ctx.fillStyle = "rgba(255,120,0,0.3)";
+    const flameHeight = 200;
+    for (let i=0; i<5; i++) {
+      const offset = (Date.now()/600 + i) % 2 * Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(0, gameH);
+      for (let x=0; x<=gameW; x+=20) {
+        const y = gameH - flameHeight * Math.abs(Math.sin(x/150 + offset));
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(gameW, gameH);
+      ctx.lineTo(0, gameH);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.clearRect(0,0,gameW,gameH);
+    renderFire();
+
+    for (let i = collisionParticles.length-1; i >= 0; i--){
+      const p = collisionParticles[i];
+      p.dy += 0.15;
+      p.x += p.dx;
+      p.y += p.dy;
+      p.life -= 1/60;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+      ctx.fillStyle = p.color.replace('rgb', 'rgba').replace(')', `,${Math.max(p.life/0.5,0)})`);
+      ctx.fill();
+
+      if(p.life <= 0){
+        collisionParticles.splice(i,1);
+      }
+    }
+    
+    particles.forEach(p=>{
+      p.y -= p.speedY;
+      const traveled = p.startY - p.y;
+      if(traveled > particleTravel * 0.8) p.alpha -= 0.005;
+      if(traveled > particleTravel || p.alpha <= 0){
+        p.x = Math.random()*gameW;
+        p.y = gameH;
+        p.startY = gameH;
+        p.alpha = Math.random()*0.5+0.3;
+        p.radius = Math.random()*3+2;
+        p.speedY = Math.random()*0.3+0.2;
+      }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255, ${100+Math.random()*155}, 0, ${p.alpha})`;
+      ctx.fill();
+    });
+
+    const lavaY = gameH - lavaHeight;
+    ctx.beginPath();
+    ctx.moveTo(-50, gameH);
+    for(let x=-50;x<=gameW+50;x+=10){
+      const y = lavaY + 20*Math.sin(Date.now()/500 + x/50);
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(gameW+50, gameH);
+    ctx.lineTo(-50, gameH);
+    ctx.closePath();
+    ctx.fillStyle = '#ff4a00';
+    ctx.fill();
+
+    ballTrail.push({x:ballX,y:ballY});
+    if(ballTrail.length>60) ballTrail.shift();
+    ballTrail.forEach((pos,i)=>{
+      const alpha = (i+1)/ballTrail.length * 0.01;
+      ctx.fillStyle = `rgba(170,170,170,${alpha})`;
+      const r = ballSize*0.25;
+      ctx.beginPath();
+      ctx.moveTo(pos.x+r,pos.y);
+      ctx.lineTo(pos.x+ballSize-r,pos.y);
+      ctx.quadraticCurveTo(pos.x+ballSize,pos.y,pos.x+ballSize,pos.y+r);
+      ctx.lineTo(pos.x+ballSize,pos.y+ballSize-r);
+      ctx.quadraticCurveTo(pos.x+ballSize,pos.y+ballSize,pos.x+ballSize-r,pos.y+ballSize);
+      ctx.lineTo(pos.x+r,pos.y+ballSize);
+      ctx.quadraticCurveTo(pos.x,pos.y+ballSize,pos.x,pos.y+ballSize-r);
+      ctx.lineTo(pos.x,pos.y+r);
+      ctx.quadraticCurveTo(pos.x,pos.y,pos.x+r,pos.y);
+      ctx.fill();
+    });
+
+    ball.style.left = ballX+'px';
+    ball.style.top = ballY+'px';
+  }
+
+  let lastTime = performance.now();
+  function loop(now){
+    if(!running) return;
+    const dt = (now-lastTime)/(1000/60);
+    lastTime=now;
+    updatePhysics(dt);
+    updatePaddle(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function startGame(){
+    if (running) return;
+    score=0; 
+    stage=1; 
+    ballSpeed = baseBallSpeed;
+    paddleSpeed = basePaddleSpeed;
+    fireIntensity = 0;
+    updateHUD();
+    spawnPaddle();
+    spawnBall();
+    generateBlocks();
+    running=true;
+    lastTime = performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function gameOver() {
+    running = false;
+    gameOverMsg.style.opacity = 1;
+    gameOverMsg.style.pointerEvents = 'auto';
+  }
+
+  retryBtn.addEventListener('click', () => {
+    gameOverMsg.style.opacity = 0;
+    gameOverMsg.style.pointerEvents = 'none';
+    startGame();
+  });
+
+  if (document.hasFocus()) startGame();
+
+  window.addEventListener('blur', () => {
+    running = false;
+  });
+
+  window.addEventListener('focus', () => {
+    if (!running) {
+      running = true;
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+  });
+
+  window.addEventListener('resize', ()=>{
+    gameW = window.innerWidth;
+    gameH = window.innerHeight;
+    canvas.width = gameW;
+    canvas.height = gameH;
+  });
+
+})();
+</script>
+</body>
+</html>
