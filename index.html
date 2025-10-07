@@ -145,6 +145,7 @@
   let blocks = [];
   let running = false;
 
+  const keys = { ArrowLeft: false, ArrowRight: false };
   let paddle, paddleX, paddleY, paddleMove = 0;
   let ball, ballX, ballY, ballDX, ballDY;
 
@@ -268,12 +269,18 @@
     return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
   }
 
-  window.addEventListener('keydown', e=>{
-    if (e.key==='ArrowLeft') paddleMove=-1;
-    if (e.key==='ArrowRight') paddleMove=1;
+  window.addEventListener('keydown', e => {
+    if (e.key in keys) keys[e.key] = true;
+    if (keys.ArrowLeft && !keys.ArrowRight) paddleMove = -1;
+    else if (keys.ArrowRight && !keys.ArrowLeft) paddleMove = 1;
+    else paddleMove = 0;
   });
-  window.addEventListener('keyup', e=>{
-    if (e.key==='ArrowLeft'||e.key==='ArrowRight') paddleMove=0;
+
+  window.addEventListener('keyup', e => {
+    if (e.key in keys) keys[e.key] = false;
+    if (keys.ArrowLeft && !keys.ArrowRight) paddleMove = -1;
+    else if (keys.ArrowRight && !keys.ArrowLeft) paddleMove = 1;
+    else paddleMove = 0;
   });
 
   function updatePhysics(dt) {
