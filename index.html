@@ -459,17 +459,13 @@
     ctx.fillStyle = '#ff4a00';
     ctx.fill();
 
-    ballTrail.push({ x: ballX, y: ballY, dx: ballDX * ballSpeed, dy: ballDY * ballSpeed });
+    ballTrail.push({ x: ballX, y: ballY });
     if (ballTrail.length > 60) ballTrail.shift();
     for (let i = 0; i < ballTrail.length; i++) {
-      const pos = ballTrail[i];
-      pos.x += pos.dx * dt;
-      pos.y += pos.dy * dt;
-
       const alpha = ((i + 1) / ballTrail.length) * 0.01;
       ctx.fillStyle = `rgba(170,170,170,${alpha})`;
       const r = ballSize * 0.25;
-
+      const pos = ballTrail[i];
       ctx.beginPath();
       ctx.moveTo(pos.x + r, pos.y);
       ctx.lineTo(pos.x + ballSize - r, pos.y);
