@@ -459,13 +459,24 @@
     ctx.fillStyle = '#ff4a00';
     ctx.fill();
 
-    ballTrail.push({ x: ballX, y: ballY });
-    if (ballTrail.length > 60) ballTrail.shift();
-    for (let i = 0; i < ballTrail.length; i++) {
-      const alpha = ((i + 1) / ballTrail.length) * 0.01;
-      ctx.fillStyle = `rgba(170,170,170,${alpha})`;
+    const TRAIL_LIFETIME = 0.5;
+    const TRAIL_OPACITY = 0.1;
+    const TRAIL_MIN_DISTANCE = 8; 
+    if (ballTrail.length === 0 || 
+      Math.hypot(ballX - ballTrail[ballTrail.length - 1].x, ballY - ballTrail[ballTrail.length - 1].y) > TRAIL_MIN_DISTANCE) {
+      ballTrail.push({ x: ballX, y: ballY, time: 0 });
+    }
+    for (let i = ballTrail.length - 1; i >= 0; i--) {
+      const t = ballTrail[i];
+      t.time += dt / 60;
+      const alpha = Math.max(1 - t.time / TRAIL_LIFETIME, 0);
+      if (alpha <= 0) {
+        ballTrail.splice(i, 1);
+        continue;
+      }
       const r = ballSize * 0.25;
-      const pos = ballTrail[i];
+      ctx.fillStyle = `rgba(170,170,170,${alpha * TRAIL_OPACITY})`;
+      const pos = t;
       ctx.beginPath();
       ctx.moveTo(pos.x + r, pos.y);
       ctx.lineTo(pos.x + ballSize - r, pos.y);
