@@ -6,96 +6,106 @@
 <title>Breakout!</title>
 <link rel="icon" href="favicon.png" type="image/png" />
 <style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #111;
+    color: #fff;
+    font-family: sans-serif;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
   body {
-    margin:0;
-    background:#111;
-    color:#fff;
-    font-family:sans-serif;
-    overflow:hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   #game {
-    position:relative;
-    width:100%;
-    height:100vh;
-    overflow:hidden;
+    position: relative;
+    width: 1366px;
+    height: 743px;
+    background: #111;
+    overflow: hidden;
+    border: 3px solid #000;
   }
   .game-el {
-    position:absolute;
-    box-sizing:border-box;
-    z-index:100;
+    position: absolute;
+    box-sizing: border-box;
+    z-index: 100;
   }
   #paddle {
-    height:22px;
-    background:#0b84ff;
-    border:3px solid #000;
-    border-radius:6px;
-    z-index:106;
+    height: 22px;
+    background: #0b84ff;
+    border: 3px solid #000;
+    border-radius: 6px;
+    z-index: 106;
   }
   #ball {
-    width:36px;
-    height:36px;
-    background:#aaa;
-    border:3px solid #000;
-    border-radius:25%;
-    z-index:105;
+    width: 36px;
+    height: 36px;
+    background: #aaa;
+    border: 3px solid #000;
+    border-radius: 25%;
+    z-index: 105;
     transition: background 0.15s ease;
   }
   .block {
-    height:40px;
-    border:3px solid #000;
-    border-radius:6px;
-    z-index:107;
+    height: 40px;
+    border: 3px solid #000;
+    border-radius: 6px;
+    z-index: 107;
   }
   #hud, #stageHud {
-    position:absolute;
-    top:12px;
-    background:#fff;
-    color:#000;
-    padding:6px 10px;
-    border-radius:6px;
-    border:3px solid #000;
-    font-weight:600;
-    z-index:200;
+    position: absolute;
+    top: 12px;
+    background: #fff;
+    color: #000;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 3px solid #000;
+    font-weight: 600;
+    z-index: 200;
     user-select: none;
   }
-  #hud { left:12px; }
-  #stageHud { right:12px; }
+  #hud { left: 12px; }
+  #stageHud { right: 12px; }
   .stage-msg {
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    background:rgba(255,255,255,0.9);
-    color:#000;
-    padding:12px 20px;
-    border:3px solid #000;
-    border-radius:10px;
-    font-size:1.5rem;
-    font-weight:bold;
-    z-index:300;
-    opacity:0;
-    transition:opacity 0.5s ease;
-    pointer-events:none;
-    text-align:center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    background: rgba(255,255,255,0.9);
+    color: #000;
+    padding: 12px 20px;
+    border: 3px solid #000;
+    border-radius: 10px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    z-index: 300;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    text-align: center;
   }
   #canvas {
-    position:absolute;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    z-index:104;
-    pointer-events:none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1366px;
+    height: 743px;
+    z-index: 104;
+    pointer-events: none;
   }
   #retryBtn {
-    margin-top:10px;
-    padding:8px 16px;
-    font-size:1rem;
-    font-weight:bold;
-    border:3px solid #000;
-    border-radius:6px;
-    background:#fff;
-    cursor:pointer;
+    margin-top: 10px;
+    padding: 8px 16px;
+    font-size: 1rem;
+    font-weight: bold;
+    border: 3px solid #000;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
   }
 </style>
 </head>
@@ -113,6 +123,9 @@
 
 <script>
 (function () {
+  const FIXED_WIDTH = 1366;
+  const FIXED_HEIGHT = 743;
+
   const gameEl = document.getElementById('game');
   const hudScore = document.getElementById('score');
   const stageNumEl = document.getElementById('stageNum');
@@ -122,8 +135,8 @@
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
 
-  let gameW = window.innerWidth;
-  let gameH = window.innerHeight;
+  let gameW = FIXED_WIDTH;
+  let gameH = FIXED_HEIGHT;
   const lavaHeight = 50;
 
   canvas.width = gameW;
@@ -547,13 +560,6 @@
       lastTime = performance.now();
       requestAnimationFrame(loop);
     }
-  });
-
-  window.addEventListener('resize', ()=>{
-    gameW = window.innerWidth;
-    gameH = window.innerHeight;
-    canvas.width = gameW;
-    canvas.height = gameH;
   });
 
 })();
