@@ -21,6 +21,13 @@
     align-items: center;
     justify-content: center;
   }
+  #game-wrapper {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #000;
+  }
   #game {
     position: relative;
     width: 1366px;
@@ -110,15 +117,17 @@
 </style>
 </head>
 <body>
-<div id="game">
-  <div id="hud">Score: <span id="score">0</span></div>
-  <div id="stageHud">Stage <span id="stageNum">1</span></div>
-  <div id="stageMsg" class="stage-msg"></div>
-  <div id="gameOverMsg" class="stage-msg">
-    Game Over!<br>
-    <button id="retryBtn">Retry</button>
+<div id="game-wrapper">
+  <div id="game">
+    <div id="hud">Score: <span id="score">0</span></div>
+    <div id="stageHud">Stage <span id="stageNum">1</span></div>
+    <div id="stageMsg" class="stage-msg"></div>
+    <div id="gameOverMsg" class="stage-msg">
+      Game Over!<br>
+      <button id="retryBtn">Retry</button>
+    </div>
+    <canvas id="canvas"></canvas>
   </div>
-  <canvas id="canvas"></canvas>
 </div>
 
 <script>
@@ -126,6 +135,7 @@
   const FIXED_WIDTH = 1366;
   const FIXED_HEIGHT = 743;
 
+  const gameWrapper = document.getElementById('game-wrapper');
   const gameEl = document.getElementById('game');
   const hudScore = document.getElementById('score');
   const stageNumEl = document.getElementById('stageNum');
@@ -134,6 +144,16 @@
   const retryBtn = document.getElementById('retryBtn');
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
+
+  function resizeGame() {
+    const scaleX = window.innerWidth / FIXED_WIDTH;
+    const scaleY = window.innerHeight / FIXED_HEIGHT;
+    const scale = Math.min(scaleX, scaleY);
+    gameEl.style.transform = `scale(${scale})`;
+  }
+
+  window.addEventListener('resize', resizeGame);
+  resizeGame();
 
   let gameW = FIXED_WIDTH;
   let gameH = FIXED_HEIGHT;
