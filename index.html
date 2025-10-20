@@ -47,6 +47,7 @@
     border: 3px solid #000;
     border-radius: 6px;
     z-index: 106;
+    box-shadow: 0 0 10px 1px rgba(11, 132, 255, 0.5);
   }
   #ball {
     width: 36px;
@@ -62,6 +63,7 @@
     border: 3px solid #000;
     border-radius: 6px;
     z-index: 107;
+    box-shadow: 0 0 10px 1px currentColor;
   }
   #hud, #stageHud {
     position: absolute;
@@ -164,14 +166,14 @@
 
   const paddleW = 200;
   const paddleH = 22;
-  const ballSize = 36;
+  const ballSize = 28;
   const blockW = 180;
   const blockH = 40;
   const blockRows = 5;
   const blockCols = 7;
 
-  const baseBallSpeed = 4;
-  const basePaddleSpeed = 7;
+  const baseBallSpeed = 5;
+  const basePaddleSpeed = 9;
   let ballSpeed = baseBallSpeed;
   let paddleSpeed = basePaddleSpeed;
 
@@ -290,6 +292,8 @@
         const bMix = Math.round(bb*(1-tint) + 0*tint);
         const color = `rgb(${rMix},${gMix},${bMix})`;
         const el = createDiv({ classes:'block', x,y,w:blockW,h:blockH,bg:color });
+        el.style.color = color;
+        el.style.boxShadow = `0 0 10px 1px ${color.replace('rgb', 'rgba').replace(')', ',0.5)')}`;
         blocks.push({ x,y,w:blockW,h:blockH,el });
       }
     }
