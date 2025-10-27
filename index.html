@@ -43,7 +43,6 @@
   }
   #paddle {
     height: 22px;
-    background: #0b84ff;
     border: 3px solid #000;
     border-radius: 6px;
     z-index: 106;
@@ -246,7 +245,7 @@
     paddleX = (gameW - paddleW) / 2;
     paddleY = gameH - lavaHeight - 80;
     if (paddle) paddle.remove();
-    paddle = createDiv({ id:'paddle', x:paddleX, y:paddleY, w:paddleW, h:paddleH, bg:'#0b84ff' });
+    paddle = createDiv({ id:'paddle', x:paddleX, y:paddleY, w:paddleW, h:paddleH, bg:'#0000FF' });
   }
 
   function spawnBall() {
