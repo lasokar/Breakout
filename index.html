@@ -49,14 +49,13 @@
     box-shadow: 0 0 10px 1px rgba(11, 132, 255, 0.5);
   }
   #ball {
-    width: 36px;
-    height: 36px;
     background: #fff;
     border: 3px solid #000;
     border-radius: 25%;
     z-index: 105;
-    transition: background 0.15s ease;
-  }
+    transition: background 0.15s ease, transform 0.15s ease;
+    transform-origin: center;
+  }  
   .block {
     height: 40px;
     border: 3px solid #000;
@@ -222,10 +221,33 @@
 
   function pulseBall() {
     if (!ball) return;
-    ball.style.background = '#aaa';
+
+    ball.style.transition = 'transform 0s ease';
+    ball.style.transform = 'scale(1.3)';
     setTimeout(() => {
-      ball.style.background = '#fff';
-    }, 150);
+      ball.style.transition = 'transform 0.5s ease';
+      ball.style.transform = 'scale(1)';
+    }, 10);
+
+    const ghost = document.createElement('div');
+    ghost.className = 'game-el';
+    ghost.style.position = 'absolute';
+    ghost.style.left = ballX + 'px';
+    ghost.style.top = ballY + 'px';
+    ghost.style.width = (ballSize * 1.1) + 'px';
+    ghost.style.height = (ballSize * 1.1) + 'px';
+    ghost.style.borderRadius = '25%';
+    ghost.style.background = '#fff';
+    ghost.style.opacity = '0.3';
+    ghost.style.zIndex = '50';
+    ghost.style.pointerEvents = 'none';
+    ghost.style.transition = 'opacity 0.5s ease';
+    gameEl.appendChild(ghost);
+
+    requestAnimationFrame(() => {
+      ghost.style.opacity = '0';
+    });
+    setTimeout(() => ghost.remove(), 500);
   }
 
   function createDiv({ id, x, y, w, h, bg, classes = '' }) {
