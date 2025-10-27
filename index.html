@@ -272,7 +272,7 @@
 
   function spawnBall() {
     ballX = paddleX + paddleW / 2 - ballSize / 2;
-    ballY = paddleY - paddleH / 2 - ballSize / 2;
+    ballY = paddleY - paddleH / 2 - ballSize;
     const centerThreshold = gameW * 0.1;
     if (paddleX > gameW / 2 + centerThreshold) {
         ballDX = 1;
