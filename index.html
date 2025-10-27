@@ -51,7 +51,7 @@
   #ball {
     width: 36px;
     height: 36px;
-    background: #aaa;
+    background: #fff;
     border: 3px solid #000;
     border-radius: 25%;
     z-index: 105;
@@ -222,10 +222,10 @@
 
   function pulseBall() {
     if (!ball) return;
-    ball.style.background = '#fff';
+    ball.style.background = '#aaa';
     setTimeout(() => {
-      ball.style.background = '#aaa';
-    }, 100);
+      ball.style.background = '#fff';
+    }, 150);
   }
 
   function createDiv({ id, x, y, w, h, bg, classes = '' }) {
@@ -261,7 +261,7 @@
     }
     ballDY = -1;
     if (ball) ball.remove();
-    ball = createDiv({ id: 'ball', x: ballX, y: ballY, w: ballSize, h: ballSize, bg: '#aaa' });
+    ball = createDiv({ id: 'ball', x: ballX, y: ballY, w: ballSize, h: ballSize, bg: '#fff' });
     ball.style.borderRadius = '25%';
     ballTrail.length = 0;
   }
