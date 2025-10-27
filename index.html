@@ -572,7 +572,8 @@
     startGame();
   });
 
-  if (document.hasFocus()) startGame();
+  startGame();
+  window.focus();
 
   window.addEventListener('blur', () => {
     running = false;
