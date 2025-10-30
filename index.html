@@ -274,9 +274,9 @@
     ballX = paddleX + paddleW / 2 - ballSize / 2;
     ballY = paddleY - paddleH / 2 - ballSize;
     const centerThreshold = gameW * 0.1;
-    if (paddleX > gameW / 2 + centerThreshold) {
+    if (paddleX + paddleW / 2 > gameW / 2 + centerThreshold) {
         ballDX = 1;
-    } else if (paddleX < gameW / 2 - centerThreshold) {
+    } else if (paddleX + paddleW / 2 < gameW / 2 - centerThreshold) {
         ballDX = -1;
     } else {
         ballDX = Math.random() > 0.5 ? 1 : -1;
